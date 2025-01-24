@@ -1,0 +1,70 @@
+# Environment variables
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+log/
+
+# Local development
+instance/
+.webassets-cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Large model files or datasets
+*.pkl
+*.h5
+*.model
+*.bin
+*.onnx
+*.pt
+*.pth
+
+# API keys and secrets
+config.ini
+secrets.yaml
+credentials.json
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Node modules (if you have any frontend dependencies)
+node_modules/ 

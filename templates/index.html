@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with Deepseek</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="chat-container">
+        <h1>Chat with Deepseek</h1>
+        <div id="chat-box">
+            <div class="user-message"></div>
+            <div class="search-results"></div>
+            <div class="deepseek-response"></div>
+        </div>
+        <div class="input-container">
+            <input type="text" id="user-input" placeholder="Type your message here...">
+            <div class="button-container">
+                <button id="ask-deepseek">Ask Deepseek Only</button>
+                <button id="search-button">Search the Internet</button>
+                <button id="whitelist-search">Search BBC News</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('ask-deepseek').addEventListener('click', async () => {
+            const userInput = document.getElementById('user-input').value;
+            const chatBox = document.getElementById('chat-box');
+
+            // Add user message with proper class
+            chatBox.innerHTML += `<div class="message user-message">${userInput}</div>`;
+            document.getElementById('user-input').value = '';
+
+            // Send request to the chat endpoint
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: userInput })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // Add Deepseek response with proper class
+                chatBox.innerHTML += `<div class="message deepseek-response">${data.deepseek_response}</div>`;
+            }
+        });
+
+        document.getElementById('search-button').addEventListener('click', async () => {
+            const userInput = document.getElementById('user-input').value;
+            const chatBox = document.getElementById('chat-box');
+
+            // Add user message with proper class
+            chatBox.innerHTML += `<div class="message user-message">${userInput}</div>`;
+            document.getElementById('user-input').value = '';
+
+            // Send request to the search endpoint
+            const response = await fetch('/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: userInput })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.search_results && data.search_results.length > 0) {
+                    chatBox.innerHTML += `<div class="message search-results">${data.search_results.join('<br>')}</div>`;
+                } else {
+                    chatBox.innerHTML += `<div class="message search-results">No search results found.</div>`;
+                }
+                chatBox.innerHTML += `<div class="message deepseek-response">${data.deepseek_response}</div>`;
+            }
+        });
+
+        document.getElementById('whitelist-search').addEventListener('click', async () => {
+            const userInput = document.getElementById('user-input').value;
+            const chatBox = document.getElementById('chat-box');
+
+            // Add user message with proper class
+            chatBox.innerHTML += `<div class="message user-message">${userInput}</div>`;
+            document.getElementById('user-input').value = '';
+
+            // Send request to the whitelist search endpoint
+            const response = await fetch('/whitelist-search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: userInput })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.search_results && data.search_results.length > 0) {
+                    chatBox.innerHTML += `<div class="message bbc-results">${data.search_results.join('<br>')}</div>`;
+                } else {
+                    chatBox.innerHTML += `<div class="message bbc-results">No relevant BBC News articles found.</div>`;
+                }
+                chatBox.innerHTML += `<div class="message deepseek-response">${data.deepseek_response}</div>`;
+            }
+        });
+    </script>
+</body>
+</html>
