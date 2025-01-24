@@ -34,6 +34,18 @@ body {
     font-size: 16px;
     line-height: 1.6;
     letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.message:hover {
+    opacity: 0.9;
+    transform: translateX(5px);
+}
+
+.message.selected {
+    box-shadow: 0 0 0 2px #1976d2;
+    transform: translateX(10px);
 }
 
 .user-message {
@@ -135,6 +147,11 @@ button {
 
 button:hover {
     background-color: #1565c0;
+}
+
+button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
 }
 
 /* Custom scrollbar styles */

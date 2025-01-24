@@ -108,22 +108,32 @@ def search():
     else:
         search_results_text = "\n".join(search_results)
     
-    prompt = f"User asked: {user_input}\n\nHere are some search results:\n{search_results_text}\n\nBased on this information, please provide a coherent response."
+    prompt = f"""User asked: {user_input}
+
+Here are the search results:
+{search_results_text}
+
+Important instructions:
+1. Base your response ONLY on the information provided in these search results
+2. If the search results don't contain enough information to answer fully, acknowledge the limitations
+3. DO NOT make assumptions or add information not present in the search results
+4. If you're unsure about something, say so explicitly
+5. Use phrases like "According to the search results..." to show you're grounding your response in the provided information
+
+Please provide a response based strictly on these search results."""
     
     deepseek_response = query_deepseek(prompt)
     
-    response = {
+    return jsonify({
         'deepseek_response': deepseek_response,
         'search_results': search_results
-    }
-    
-    return jsonify(response)
+    })
 
 @app.route('/whitelist-search', methods=['POST'])
 def whitelist_search():
     user_input = request.json.get('message')
     
-    # Perform search specifically for BBC News
+    # Perform BBC News search
     url = "https://google.serper.dev/search"
     payload = json.dumps({
         "q": f"site:bbc.co.uk/news {user_input}",
@@ -147,16 +157,53 @@ def whitelist_search():
     else:
         search_results_text = "\n".join(search_results)
     
-    prompt = f"User asked: {user_input}\n\nHere are some BBC News search results:\n{search_results_text}\n\nBased on this information, please provide a coherent response."
+    prompt = f"""User asked: {user_input}
+
+Here are the BBC News articles:
+{search_results_text}
+
+Important instructions:
+1. Base your response ONLY on the information provided in these BBC News articles
+2. If the articles don't contain enough information to answer fully, acknowledge the limitations
+3. DO NOT make assumptions or add information not present in the BBC News articles
+4. If you're unsure about something, say so explicitly
+5. Use phrases like "According to BBC News..." to show you're grounding your response in the provided information
+
+Please provide a response based strictly on these BBC News articles."""
     
     deepseek_response = query_deepseek(prompt)
     
-    response = {
+    return jsonify({
         'deepseek_response': deepseek_response,
         'search_results': search_results
-    }
+    })
+
+@app.route('/refine', methods=['POST'])
+def refine():
+    data = request.json
+    original_response = data.get('original_response', '')
+    refinement_request = data.get('refinement_request', '')
     
-    return jsonify(response)
+    prompt = f"""Original response:
+{original_response}
+
+User's refinement request:
+{refinement_request}
+
+Important instructions:
+1. Only refine the response using information that was present in the original response
+2. DO NOT add new information or make assumptions
+3. Focus on reorganizing, clarifying, or emphasizing existing information
+4. If the refinement request asks for information not present in the original response, acknowledge that limitation
+5. Maintain factual accuracy while making the requested refinements
+
+Please refine the original response according to these guidelines."""
+    
+    refined_response = query_deepseek(prompt)
+    
+    return jsonify({
+        'refined_response': refined_response
+    })
 
 if __name__ == '__main__':
     app.run(debug=True)

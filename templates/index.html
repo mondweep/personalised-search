@@ -20,20 +20,38 @@
                 <button id="ask-deepseek">Ask Deepseek Only</button>
                 <button id="search-button">Search the Internet</button>
                 <button id="whitelist-search">Search BBC News</button>
+                <button id="refine-button" disabled>Refine Response</button>
             </div>
         </div>
     </div>
 
     <script>
+        let selectedResponse = null;
+
+        function makeResponsesSelectable() {
+            const messages = document.querySelectorAll('.message');
+            messages.forEach(message => {
+                message.addEventListener('click', function() {
+                    // Remove previous selection
+                    const allMessages = document.querySelectorAll('.message');
+                    allMessages.forEach(m => m.classList.remove('selected'));
+                    
+                    // Add new selection
+                    this.classList.add('selected');
+                    selectedResponse = this;
+                    // Enable the refine button
+                    document.getElementById('refine-button').disabled = false;
+                });
+            });
+        }
+
         document.getElementById('ask-deepseek').addEventListener('click', async () => {
             const userInput = document.getElementById('user-input').value;
             const chatBox = document.getElementById('chat-box');
 
-            // Add user message with proper class
             chatBox.innerHTML += `<div class="message user-message">${userInput}</div>`;
             document.getElementById('user-input').value = '';
 
-            // Send request to the chat endpoint
             const response = await fetch('/chat', {
                 method: 'POST',
                 headers: {
@@ -44,8 +62,8 @@
 
             if (response.ok) {
                 const data = await response.json();
-                // Add Deepseek response with proper class
                 chatBox.innerHTML += `<div class="message deepseek-response">${data.deepseek_response}</div>`;
+                makeResponsesSelectable();  // Make new messages selectable
             }
         });
 
@@ -53,11 +71,9 @@
             const userInput = document.getElementById('user-input').value;
             const chatBox = document.getElementById('chat-box');
 
-            // Add user message with proper class
             chatBox.innerHTML += `<div class="message user-message">${userInput}</div>`;
             document.getElementById('user-input').value = '';
 
-            // Send request to the search endpoint
             const response = await fetch('/search', {
                 method: 'POST',
                 headers: {
@@ -68,12 +84,9 @@
 
             if (response.ok) {
                 const data = await response.json();
-                if (data.search_results && data.search_results.length > 0) {
-                    chatBox.innerHTML += `<div class="message search-results">${data.search_results.join('<br>')}</div>`;
-                } else {
-                    chatBox.innerHTML += `<div class="message search-results">No search results found.</div>`;
-                }
+                chatBox.innerHTML += `<div class="message search-results">${data.search_results.join('<br>')}</div>`;
                 chatBox.innerHTML += `<div class="message deepseek-response">${data.deepseek_response}</div>`;
+                makeResponsesSelectable();  // Make new messages selectable
             }
         });
 
@@ -81,11 +94,9 @@
             const userInput = document.getElementById('user-input').value;
             const chatBox = document.getElementById('chat-box');
 
-            // Add user message with proper class
             chatBox.innerHTML += `<div class="message user-message">${userInput}</div>`;
             document.getElementById('user-input').value = '';
 
-            // Send request to the whitelist search endpoint
             const response = await fetch('/whitelist-search', {
                 method: 'POST',
                 headers: {
@@ -96,14 +107,51 @@
 
             if (response.ok) {
                 const data = await response.json();
-                if (data.search_results && data.search_results.length > 0) {
-                    chatBox.innerHTML += `<div class="message bbc-results">${data.search_results.join('<br>')}</div>`;
-                } else {
-                    chatBox.innerHTML += `<div class="message bbc-results">No relevant BBC News articles found.</div>`;
-                }
+                chatBox.innerHTML += `<div class="message bbc-results">${data.search_results.join('<br>')}</div>`;
                 chatBox.innerHTML += `<div class="message deepseek-response">${data.deepseek_response}</div>`;
+                makeResponsesSelectable();  // Make new messages selectable
             }
         });
+
+        document.getElementById('refine-button').addEventListener('click', async () => {
+            if (!selectedResponse) return;
+
+            const userInput = document.getElementById('user-input').value;
+            if (!userInput) {
+                alert('Please enter refinement instructions');
+                return;
+            }
+
+            const selectedText = selectedResponse.textContent;
+            const chatBox = document.getElementById('chat-box');
+
+            chatBox.innerHTML += `<div class="message user-message">Please refine this response: ${userInput}</div>`;
+
+            const response = await fetch('/refine', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    original_response: selectedText,
+                    refinement_request: userInput
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                chatBox.innerHTML += `<div class="message deepseek-response">${data.refined_response}</div>`;
+                makeResponsesSelectable();  // Make new messages selectable
+            }
+
+            document.getElementById('user-input').value = '';
+            selectedResponse.classList.remove('selected');
+            selectedResponse = null;
+            document.getElementById('refine-button').disabled = true;
+        });
+
+        // Initial call to make existing messages selectable
+        makeResponsesSelectable();
     </script>
 </body>
 </html>
